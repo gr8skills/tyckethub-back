@@ -22,16 +22,17 @@ class EventImageController extends ApiController
     public function saveEventImage(Request $request, Event $event)
     {
 
-
         if ($event) {
             $data = $request->all();
+            return $this->showMessage(compact($data));
             if (is_null($data) || count($data) === 0) {
                 return $this->errorResponse('Cannot submit empty form. Please try again');
             }
-//            return $this->showMessage('I got here successfully.');
+
 
             if ($request->has('banner')) {
                 $image_url = $this->storeImage($request->file('banner'), Image::IMAGE_TYPES[0]);
+//                return $this->showMessage('I got here successfully.');
                 if (!$image_url) {
                     return $this->errorResponse('Image upload failed.');
                 }

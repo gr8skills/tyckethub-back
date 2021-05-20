@@ -29,14 +29,15 @@ trait ImageHelper
 
         try {
             $image = Image::make($image_file);
-            $image->resize(100, 110, function ($const){
-                $const->aspectRatio();
-            })->save($image_name);
-            $filePath = public_path('/images');
-            $image->move($filePath, $image);
+            $image->save($image_name);
+            Storage::disk($disk)->put($image_name, $image);
             return $image_name;
+
+//            $filePath = public_path('/images');
+//            $image->move($filePath, $image);
+//            return $image_name;
         } catch (\Exception $e) {
-            return null;
+            return $this->showMessage('Image upload failed!!!.');
         }
 
     }
