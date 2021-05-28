@@ -11,6 +11,7 @@ use App\Traits\ImageHelper;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Console\Input\Input;
 
 
 class EventController extends ApiController
@@ -19,13 +20,33 @@ class EventController extends ApiController
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['index', 'show', 'update']]);
+        $this->middleware('auth:api', ['except' => ['index', 'show', 'update', 'getMoreEvents', 'getSimilarEvents']]);
     }
 
     public function index()
     {
-        $events = Event::with(['images'])->get();
-        return $this->showAll($events, 200);
+        $data = Event::with(['images'])->orderBy('id', 'DESC')->limit(15)->paginate();
+       $events = $data->map(function ($dat) {
+            $temp = [];
+                $temp['id'] = $dat->id;
+                $temp['title'] = $dat->name;
+                $temp['status'] = $dat->status;
+                $temp['image_url'] = $dat->thumb;
+                $temp['date'] = $dat->start_date;
+            return $temp;
+        });
+//        DB::transaction(function () use ($events, $data) {
+//            $events['id'] = $data->id;
+//            $events['title'] = $data->name;
+//            $events['status'] = $data->status;
+//            $events['image_url'] = $data->banner;
+//            $events['date'] = $data->start_date;
+//        });
+
+//        return $this->showAll($data, 200);
+        return ($data);
+
+//        return response()->json($events);
     }
 
     public function store(StoreEventRequest $request)
@@ -244,5 +265,45 @@ class EventController extends ApiController
                 return EventLocation::PLATFORM_LIVE;
                 break;
         }
+    }
+
+    public function getMoreEvents()
+    {
+        $events = Event::with(['images'])->orderBy('id', 'DESC')->offset(15)->limit(333)->paginate();
+        return ($events);
+//        return $this->showAll($events, 200);
+    }
+
+    public function getSimilarEvents($event)
+    {
+        $event = Event::with(['artistes'=>function($ev){$ev->select('id','name');}])->where('id', $event)
+//            ->select(['id','status','age_restriction'])
+            ->first();
+        $data = [];
+        $i = -1;
+        $data['id'] = $event->id;
+        $data['status'] = $event->event_status_id;
+        $data['name'] = $event->name;
+        $data['description'] = $event->description;
+        $data['age_restriction'] = $event->age_restriction;
+        foreach ($event->artistes as $artiste){
+            $i++;
+            $data['artiste'][$i] = [
+                'id' => $artiste->id,
+                'name' => $artiste->name];
+        }
+        $similar = Event::with(['images'])
+            ->where(function ($sim) use ($data) {
+//                $sim->where('event_status_id', $data['status']);
+                $sim->where('age_restriction', $data['age_restriction']);
+                $sim->orWhere('name', 'LIKE', '%' . $data['name'] . '%');
+                $sim->orWhere('description', 'LIKE', '%' . $data['description'] . '%');
+            })
+            ->orderBy('id', 'DESC')
+            ->limit(5)
+            ->get();
+        return ($similar);
+
+
     }
 }

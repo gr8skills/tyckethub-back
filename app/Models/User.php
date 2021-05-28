@@ -84,4 +84,14 @@ class User extends Authenticatable
     {
         return Str::random(64);
     }
+
+    public function tickets()
+    {
+        return $this->belongsToMany(EventTicket::class, 'attendee_ticket_pivot', 'user_id', 'event_ticket_id')
+            ->withPivot(['quantity', 'price']);
+    }
+    public function events()
+    {
+        return $this->hasMany(Event::class, 'user_id');
+    }
 }

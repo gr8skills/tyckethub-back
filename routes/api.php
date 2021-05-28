@@ -42,6 +42,8 @@ Route::apiResource('/event-categories', App\Http\Controllers\EventCategories\Eve
 Route::get('/event-age-restrictions', [App\Http\Controllers\EventCategories\EventCategoryController::class, 'eventAgeRestrictions']);
 Route::apiResource('/event-categories.events', App\Http\Controllers\EventCategories\EventCategoryEventController::class)->only(['index']);
 Route::apiResource('/events', \App\Http\Controllers\Events\EventController::class);
+Route::get('/more-events', [\App\Http\Controllers\Events\EventController::class, 'getMoreEvents']);
+Route::get('/similar-events/{event}', [\App\Http\Controllers\Events\EventController::class, 'getSimilarEvents']);
 Route::apiResource('/events.artistes', \App\Http\Controllers\Events\EventArtisteController::class)->only(['index']);
 Route::apiResource('/events.locations', App\Http\Controllers\Events\EventLocationController::class)->only(['index']);
 Route::post('/events/{event}/onlinePlatform', [App\Http\Controllers\Events\EventExtraActionController::class, 'storeOnlinePlatform']);

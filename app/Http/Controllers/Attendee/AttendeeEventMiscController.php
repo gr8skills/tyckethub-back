@@ -7,6 +7,7 @@ use App\Models\Attendee;
 use App\Models\Event;
 use App\Models\EventTicket;
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class AttendeeEventMiscController extends ApiController
@@ -38,7 +39,7 @@ class AttendeeEventMiscController extends ApiController
         return $this->showOne($pivotEntry);
     }
 
-    public function purchaseEventTicket(Request $request, Attendee $attendee)
+    public function purchaseEventTicket(Request $request, User $attendee)
     {
         if ($request->get('ticketsDetails')) {
             $ticketsDetails = $request->get('ticketsDetails');
