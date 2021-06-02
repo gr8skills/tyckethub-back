@@ -36,4 +36,14 @@ class EventTicket extends Model
     {
         return $this->belongsToMany(Attendee::class, 'attendee_ticket_pivot', 'event_ticket_id', 'user_id');
     }
+
+    public function allAttendees()
+    {
+        return $this->belongsToMany(EventTicket::class, 'attendee_ticket_pivot', 'event_ticket_id', 'event_ticket_id');
+    }
+
+    public function allAttendeesTickets()
+    {
+        return $this->belongsToMany(Attendee::class, 'attendee_ticket_pivot', 'attendee_ticket_id');
+    }
 }

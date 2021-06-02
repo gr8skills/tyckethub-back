@@ -11,7 +11,6 @@ use App\Traits\ImageHelper;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\Console\Input\Input;
 
 
 class EventController extends ApiController
@@ -20,34 +19,91 @@ class EventController extends ApiController
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['index', 'show', 'update', 'getMoreEvents', 'getSimilarEvents']]);
+        $this->middleware('auth:api', ['except' => ['index', 'show', 'update', 'getMoreEvents', 'getSimilarEvents', 'destroy']]);
     }
 
     public function index()
     {
-        $data = Event::with(['images'])->orderBy('id', 'DESC')->limit(15)->paginate();
-       $events = $data->map(function ($dat) {
+        $data = Event::with(['images'])
+            ->where('is_published', 1)
+            ->orderBy('id', 'DESC')->limit(15)->paginate();
+        $events = $data->map(function ($dat) {
             $temp = [];
+            $temp['id'] = $dat->id;
+            $temp['title'] = $dat->name;
+            $temp['status'] = $dat->status;
+            $temp['image_url'] = $dat->thumb;
+            $temp['date'] = $dat->start_date;
+            return $temp;
+        });
+        return ($data);
+    }
+
+    public function indexOld($payload = null)
+    {
+        if (!$payload)
+            $payload = \request()->all();
+//        dd($payload); return;
+        $now = Carbon::now();
+        $today = Carbon::now()->format('Y-m-d');
+        $end = $now->endOfWeek(Carbon::SATURDAY);
+        $weekStartDate = '2021-05-30';
+        $weekEndDate = '2090-05-30';
+        if (($payload['event'] != '' || $payload['event'] != null)){
+            if ($payload['date'] != '' || $payload['date'] != null) {
+                if ($payload['date'] != '' && $payload['date'] == 'This Week'){
+                    $weekStartDate = $now->startOfWeek()->format('Y-m-d');
+                    $weekEndDate = $now->endOfWeek()->format('Y-m-d');
+                } elseif ($payload['date'] != '' && $payload['date'] == 'This Weekend') {
+                    $weekStartDate = $now->startOfWeek()->add(5, 'day')->format('Y-m-d');
+                    $weekEndDate = $now->endOfWeek()->add(-2, 'day')->format('Y-m-d');
+                } elseif ($payload['date'] != '' && $payload['date'] == 'Next Week'){
+                    $weekStartDate = $now->startOfWeek()->add(8, 'day')->format('Y-m-d');
+                    $weekEndDate = $now->endOfWeek()->add(8, 'day')->format('Y-m-d');
+                }
+            }
+
+
+            if ($payload['event'] != '' || $payload['event'] != null){
+                $data = Event::with(['images'])
+                    ->where('is_published', 1)
+                    ->where(function ($sim) use ($weekEndDate, $weekStartDate, $payload) {
+                        $sim->where('name', 'LIKE', '%' . $payload['event'] . '%');
+//                        $sim->orWhere('location.city_name', 'LIKE', '%' . $payload['place'] . '%');
+                        $sim->orWhereBetween('start_date', [$weekStartDate, $weekEndDate]);
+                        $sim->orWhereBetween('end_date', [$weekStartDate, $weekEndDate]);
+                    })
+                    ->orderBy('id', 'DESC')->limit(15)->paginate();
+                $events = $data->map(function ($dat) {
+                    $temp = [];
+                    $temp['id'] = $dat->id;
+                    $temp['title'] = $dat->name;
+                    $temp['status'] = $dat->status;
+                    $temp['image_url'] = $dat->thumb;
+                    $temp['date'] = $dat->start_date;
+                    return $temp;
+                });
+                return ($data);
+            }
+        }else{
+            $data = Event::with(['images'])
+                ->where('is_published', 1)
+                ->orderBy('id', 'DESC')->limit(15)->paginate();
+            $events = $data->map(function ($dat) {
+                $temp = [];
                 $temp['id'] = $dat->id;
                 $temp['title'] = $dat->name;
                 $temp['status'] = $dat->status;
                 $temp['image_url'] = $dat->thumb;
                 $temp['date'] = $dat->start_date;
-            return $temp;
-        });
-//        DB::transaction(function () use ($events, $data) {
-//            $events['id'] = $data->id;
-//            $events['title'] = $data->name;
-//            $events['status'] = $data->status;
-//            $events['image_url'] = $data->banner;
-//            $events['date'] = $data->start_date;
-//        });
+                return $temp;
+            });
+            return ($data);
+        }
 
-//        return $this->showAll($data, 200);
-        return ($data);
-
-//        return response()->json($events);
     }
+
+
 
     public function store(StoreEventRequest $request)
     {
@@ -176,6 +232,7 @@ class EventController extends ApiController
     {
         try {
             $event->delete();
+
             return $this->showOne($event);
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
@@ -269,7 +326,9 @@ class EventController extends ApiController
 
     public function getMoreEvents()
     {
-        $events = Event::with(['images'])->orderBy('id', 'DESC')->offset(15)->limit(333)->paginate();
+        $events = Event::with(['images'])
+            ->where('is_published', 1)
+            ->orderBy('id', 'DESC')->offset(15)->limit(333)->paginate();
         return ($events);
 //        return $this->showAll($events, 200);
     }
@@ -294,11 +353,13 @@ class EventController extends ApiController
         }
         $similar = Event::with(['images'])
             ->where(function ($sim) use ($data) {
-//                $sim->where('event_status_id', $data['status']);
-                $sim->where('age_restriction', $data['age_restriction']);
+                $sim->where('id','!=', $data['id']);
+                $sim->orWhere('age_restriction', $data['age_restriction']);
                 $sim->orWhere('name', 'LIKE', '%' . $data['name'] . '%');
                 $sim->orWhere('description', 'LIKE', '%' . $data['description'] . '%');
             })
+            ->where('is_published', '=', 1)
+            ->where('id', '!=', $data['id'])
             ->orderBy('id', 'DESC')
             ->limit(5)
             ->get();

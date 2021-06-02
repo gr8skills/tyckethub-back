@@ -20,7 +20,9 @@ Route::post('/attendees/{attendee}/tickets/{ticket}/re-sell', [App\Http\Controll
 Route::get('/attendees/{attendee}/tickets', [App\Http\Controllers\Attendee\AttendeeTicketController::class, 'index']);
 Route::post('/attendees/{attendee}/purchase-tickets', [App\Http\Controllers\Attendee\AttendeeEventMiscController::class, 'purchaseEventTicket']);
 Route::apiResource('/artistes', App\Http\Controllers\Artistes\ArtisteController::class);
+Route::post('/artiste-data/create', [App\Http\Controllers\Artistes\ArtisteController::class, 'create']);
 Route::apiResource('/artistes.events', \App\Http\Controllers\Artistes\ArtisteEventController::class)->only(['index']);
+Route::apiResource('/artiste/delete', App\Http\Controllers\Artistes\ArtisteController::class);
 Route::get('/artistes/{artiste}/images', [App\Http\Controllers\Artistes\ArtisteImageController::class, 'getArtisteImages']);
 Route::post('/artistes/{artiste}/images', [App\Http\Controllers\Artistes\ArtisteImageController::class, 'storeArtisteImage']);
 Route::get('/countries/seed', [App\Http\Controllers\CountryController::class, 'seedCountries']);
@@ -42,6 +44,7 @@ Route::apiResource('/event-categories', App\Http\Controllers\EventCategories\Eve
 Route::get('/event-age-restrictions', [App\Http\Controllers\EventCategories\EventCategoryController::class, 'eventAgeRestrictions']);
 Route::apiResource('/event-categories.events', App\Http\Controllers\EventCategories\EventCategoryEventController::class)->only(['index']);
 Route::apiResource('/events', \App\Http\Controllers\Events\EventController::class);
+Route::get('/search/events', [\App\Http\Controllers\Events\EventController::class, 'index']);
 Route::get('/more-events', [\App\Http\Controllers\Events\EventController::class, 'getMoreEvents']);
 Route::get('/similar-events/{event}', [\App\Http\Controllers\Events\EventController::class, 'getSimilarEvents']);
 Route::apiResource('/events.artistes', \App\Http\Controllers\Events\EventArtisteController::class)->only(['index']);
@@ -51,6 +54,9 @@ Route::post('/events/{event}/onlinePlatformExtra', [App\Http\Controllers\Events\
 Route::post('/events/{event}/publish', [App\Http\Controllers\Events\EventExtraActionController::class, 'publishEvent']);
 Route::get('/events/{event}/unpublish', [App\Http\Controllers\Events\EventExtraActionController::class, 'unPublishEvent']);
 Route::apiResource('events.statuses', \App\Http\Controllers\Events\EventStatusController::class)->only(['index']);
+Route::post('/events/status/create', [App\Http\Controllers\Events\EventStatusController::class, 'create']);
+Route::apiResource('/events/status/{event}/delete', App\Http\Controllers\Events\EventStatusController::class);
+Route::post('/events/status/{event}/approve', [App\Http\Controllers\Events\EventStatusController::class, 'approve']);
 Route::apiResource('/events.tags', \App\Http\Controllers\Events\EventTagController::class)->only(['index']);
 Route::apiResource('/events.tickets', App\Http\Controllers\Events\EventTicketController::class);
 Route::apiResource('/organizers', App\Http\Controllers\Organizer\OrganizerController::class)->only(['index', 'show']);
@@ -64,3 +70,6 @@ Route::apiResource('/tags.events', \App\Http\Controllers\Tags\TagEventController
 Route::get('/users/{user}/cards', [App\Http\Controllers\PaymentCardController::class, 'index']);
 Route::post('/users/{user}/cards', [App\Http\Controllers\PaymentCardController::class, 'store']);
 Route::delete('/users/{user}/cards/{card}', [App\Http\Controllers\PaymentCardController::class, 'destroy']);
+Route::get('/homepage/slides', [App\Http\Controllers\HomePageSlideController::class, 'index']);
+Route::post('/homepage/slide/image', [App\Http\Controllers\HomePageSlideController::class, 'store']);
+

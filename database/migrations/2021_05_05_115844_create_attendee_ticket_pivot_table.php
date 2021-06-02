@@ -18,8 +18,8 @@ class CreateAttendeeTicketPivotTable extends Migration
             $table->foreignId('user_id')->constrained();
             $table->foreignId('event_ticket_id')->constrained();
 
-            $table->smallInteger('quantity')->unsigned()->default(1);
-            $table->smallInteger('price')->unsigned();
+            $table->integer('quantity')->unsigned()->default(1);
+            $table->bigInteger('price')->unsigned();
             $table->timestamps();
         });
     }

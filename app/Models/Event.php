@@ -72,6 +72,7 @@ class Event extends Model
         return $this->status()->first()->name;
     }
 
+
     public function artistes()
     {
         return $this->belongsToMany(Artiste::class, 'artiste_event_pivot', 'event_id', 'artiste_id');
@@ -107,6 +108,7 @@ class Event extends Model
         return $this->belongsToMany(Attendee::class, 'attendee_event_pivot', 'event_id', 'user_id')
             ->withPivot(['is_favorite', 'is_purchased']);
     }
+
 
     public function tags()
     {

@@ -30,6 +30,13 @@ class Attendee extends User
             ->withPivot(['quantity', 'price']);
     }
 
+    public function paidTickets()
+    {
+        return $this->belongsToMany(EventTicket::class, 'attendee_ticket_pivot',  'event_ticket_id')
+            ->withPivot(['quantity', 'price']);
+    }
+
+
     public function favoriteEventsScope()
     {
         return $this->events()->filter(function ($event) {

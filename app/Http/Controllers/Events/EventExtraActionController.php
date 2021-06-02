@@ -125,20 +125,21 @@ class EventExtraActionController extends ApiController
 
         $event_organizer = $event->organizer()->first();
         if (!$event->uid) {
-            $event->event_link = getenv('APP_URL') . '/event/' . $event->uid;
+            $event->event_link = getenv('APP_URL') . '/event/' . $event->id . '/description';
         }
         if (!$event->organizer_link) {
-            $event->organizer_link = getenv('APP_URL') . '/o/' . $event_organizer->uid;
+            $event->organizer_link = getenv('APP_URL') . '/event/' . $event->id . '/description';
         }
 
         $event->is_completed = Event::IS_COMPLETED_TRUE;
         $event->visibility = $request->get('visibility');
         $event->schedule = $request->get('schedule');
-        if ((int)$request->get('schedule') !== 1) {
+        if ((int)$request->get('schedule') != 1) {
             if ($request->has('schedule_date') && $request->has('schedule_time')) {
                 $event->schedule_time = Carbon::parse($request->get('schedule_date'). ' ' . $request->get('schedule_time'));
             } else {
-                return $this->errorResponse('Please provide scheduled date and time to publish the event');
+                $event->schedule_time = Carbon::now()->format('Y-m-d'). ' ' . Carbon::now()->format('H-m-s');
+//                return $this->errorResponse('Please provide scheduled date and time to publish the event');
             }
         }
         $event->save();

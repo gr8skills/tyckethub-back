@@ -42,8 +42,9 @@ class ArtisteController extends ApiController
         return $this->errorResponse('Artiste not updated. None artiste attribute was modified.');
     }
 
-    public function destroy(Artiste $artiste)
+    public function destroy($artiste)
     {
+        $artiste = Artiste::where('id', $artiste)->first();
         try {
             $artiste->delete();
             return $this->showOne($artiste);
@@ -51,4 +52,15 @@ class ArtisteController extends ApiController
             return $this->errorResponse('Operation failed. Please try again later.');
         }
     }
+
+    public function create(Request $request)
+    {
+        $artisteCreate = Artiste::create($request->all());
+        $artistes = Artiste::all();
+        if ($artisteCreate)
+            return $this->showAll($artistes);
+        else
+            return ['error', 'Could not create artiste'];
+    }
+
 }
