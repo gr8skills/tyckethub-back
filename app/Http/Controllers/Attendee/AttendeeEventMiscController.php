@@ -46,7 +46,8 @@ class AttendeeEventMiscController extends ApiController
             foreach ($ticketsDetails as $ticketData) {
                 $attendee->tickets()->attach($ticketData['id'], [
                     'quantity' => $ticketData['quantity'],
-                    'price' => $ticketData['quantity'] * $ticketData['price']
+                    'price' => $ticketData['quantity'] * $ticketData['price'],
+                    'unique_id' => str_replace($ticketData['title'], ' ', '').'_'.uniqid()
                 ]);
                 $event = EventTicket::find($ticketData['id'])
                     ->event()
@@ -65,6 +66,14 @@ class AttendeeEventMiscController extends ApiController
                         ->pivot
                         ->update(['is_purchased' => Event::IS_PURCHASED_TRUE]);
                 }
+                //todo: create a job to update quantity_remaining on event_tickets table
+                $eventTicket = EventTicket::find($ticketData['id']);
+                $quantity = (int) $eventTicket->quantity_remaining;
+                $qtyBought = (int) $ticketData['quantity'];
+                $remainig = $quantity - $qtyBought;
+                EventTicket::find($ticketData['id'])
+                    ->update(['quantity_remaining' => $remainig]);
+
             }
 
             return $this->showMessage('Ticket' . (count($request->get('ticketsDetails')) > 1) ? 's' : '' . ' purchased successfully.');

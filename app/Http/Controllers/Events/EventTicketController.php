@@ -37,6 +37,7 @@ class EventTicketController extends ApiController
             'description' => $request->get('description'),
             'quantity_type' => $quantity_type,
             'quantity' => $request->get('quantity'),
+            'quantity_remaining' => $request->get('quantity'),
             'type' => $request->get('type'),
             'pricing' => $request->get('pricing'),
             'price' => $request->get('price')
