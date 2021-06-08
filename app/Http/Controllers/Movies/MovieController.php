@@ -1,33 +1,32 @@
 <?php
 
-namespace App\Http\Controllers\Events;
+namespace App\Http\Controllers\Movies;
 
 use App\Http\Controllers\ApiController;
-use App\Http\Requests\StoreEventRequest;
-use App\Models\Event;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreMovieRequest;
 use App\Models\EventLocation;
 use App\Models\EventTag;
+use App\Models\Movie;
 use App\Traits\ImageHelper;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
-
-class EventController extends ApiController
+class MovieController extends ApiController
 {
     use ImageHelper;
 
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['index', 'show', 'update', 'getMoreEvents', 'getSimilarEvents', 'destroy']]);
+        $this->middleware('auth:api', ['except' => ['index', 'show', 'update', 'destroy']]);
     }
 
     public function index()
     {
-        $data = Event::with(['images'])
+        $data = Movie::with(['images'])
             ->where('is_published', 1)
             ->orderBy('id', 'DESC')->limit(15)->paginate();
-        $events = $data->map(function ($dat) {
+        $movies = $data->map(function ($dat) {
             $temp = [];
             $temp['id'] = $dat->id;
             $temp['title'] = $dat->name;
@@ -39,89 +38,32 @@ class EventController extends ApiController
         return ($data);
     }
 
-    public function indexOld($payload = null)
-    {
-        if (!$payload)
-            $payload = \request()->all();
-//        dd($payload); return;
-        $now = Carbon::now();
-        $today = Carbon::now()->format('Y-m-d');
-        $end = $now->endOfWeek(Carbon::SATURDAY);
-        $weekStartDate = '2021-05-30';
-        $weekEndDate = '2090-05-30';
-        if (($payload['event'] != '' || $payload['event'] != null)){
-            if ($payload['date'] != '' || $payload['date'] != null) {
-                if ($payload['date'] != '' && $payload['date'] == 'This Week'){
-                    $weekStartDate = $now->startOfWeek()->format('Y-m-d');
-                    $weekEndDate = $now->endOfWeek()->format('Y-m-d');
-                } elseif ($payload['date'] != '' && $payload['date'] == 'This Weekend') {
-                    $weekStartDate = $now->startOfWeek()->add(5, 'day')->format('Y-m-d');
-                    $weekEndDate = $now->endOfWeek()->add(-2, 'day')->format('Y-m-d');
-                } elseif ($payload['date'] != '' && $payload['date'] == 'Next Week'){
-                    $weekStartDate = $now->startOfWeek()->add(8, 'day')->format('Y-m-d');
-                    $weekEndDate = $now->endOfWeek()->add(8, 'day')->format('Y-m-d');
-                }
-            }
 
-
-            if ($payload['event'] != '' || $payload['event'] != null){
-                $data = Event::with(['images'])
-                    ->where('is_published', 1)
-                    ->where(function ($sim) use ($weekEndDate, $weekStartDate, $payload) {
-                        $sim->where('name', 'LIKE', '%' . $payload['event'] . '%');
-//                        $sim->orWhere('location.city_name', 'LIKE', '%' . $payload['place'] . '%');
-                        $sim->orWhereBetween('start_date', [$weekStartDate, $weekEndDate]);
-                        $sim->orWhereBetween('end_date', [$weekStartDate, $weekEndDate]);
-                    })
-                    ->orderBy('id', 'DESC')->limit(15)->paginate();
-                $events = $data->map(function ($dat) {
-                    $temp = [];
-                    $temp['id'] = $dat->id;
-                    $temp['title'] = $dat->name;
-                    $temp['status'] = $dat->status;
-                    $temp['image_url'] = $dat->thumb;
-                    $temp['date'] = $dat->start_date;
-                    return $temp;
-                });
-                return ($data);
-            }
-        }else{
-            $data = Event::with(['images'])
-                ->where('is_published', 1)
-                ->orderBy('id', 'DESC')->limit(15)->paginate();
-            $events = $data->map(function ($dat) {
-                $temp = [];
-                $temp['id'] = $dat->id;
-                $temp['title'] = $dat->name;
-                $temp['status'] = $dat->status;
-                $temp['image_url'] = $dat->thumb;
-                $temp['date'] = $dat->start_date;
-                return $temp;
-            });
-            return ($data);
-        }
-
-    }
-
-    public function store(StoreEventRequest $request)
+    public function store(StoreMovieRequest $request)
     {
         if ($request->validated()) {
             $validated_data = $request->all();
             $validated_data['start_date'] = Carbon::parse($validated_data['start_date']);
             $validated_data['end_date'] = Carbon::parse($validated_data['end_date']);
-            $validated_data['uid'] = Event::generateUID();
-
+            $validated_data['start_time'] = substr($validated_data['start_time'], 0, 8);
+            $validated_data['end_time'] = substr($validated_data['end_time'], 0, 8);
+            $validated_data['movie_status_id'] = 1;
+            $validated_data['uid'] = Movie::generateUID();
             try {
-                $event = Event::create($validated_data);
-                if ($event) {
-                    if (!is_null($validated_data['category_ids']) && count($validated_data['category_ids']) > 0) {
-                        foreach ($validated_data['category_ids'] as $category_id) {
-                            $event->categories()->attach($category_id);
+                $movie = Movie::create($validated_data);
+                if ($movie) {
+                    if (!is_null($validated_data['genre_ids']) && count($validated_data['genre_ids']) > 0) {
+                        foreach ($validated_data['genre_ids'] as $genre_id) {
+                            $movie->genres()->attach($genre_id);
                         }
+                        $save_genre_id = $validated_data['genre_ids'][0];
+                        $movie->update([
+                            'genre_id' => $save_genre_id,
+                            ]);
                     }
                     if (!is_null($request['artiste_ids']) && count($request['artiste_ids']) > 0) {
                         foreach ($request['artiste_ids'] as $artiste_id) {
-                            $event->artistes()->attach($artiste_id);
+                            $movie->artistes()->attach($artiste_id);
                         }
                     }
                     if ($request->has('tags') && count($request->input('tags')) > 0) {
@@ -132,17 +74,17 @@ class EventController extends ApiController
 
                             if (in_array($tag, $available_tag_names)) {
                                 $tag_id = array_search($tag, $available_tag_names);
-                                $event->tags()->attach($tag_id);
+                                $movie->tags()->attach($tag_id);
                             } else {
                                 $tag_new = EventTag::create([
                                     'name' => $tag,
                                 ]);
-                                $event->tags()->attach($tag_new->id);
+                                $movie->tags()->attach($tag_new->id);
                             }
                         }
                     }
                     if ($request->location) {
-                        $event->location()->create([
+                        $movie->location()->create([
                             'country_id' => $request->location['country'],
                             'state_id' => $request->location['state'],
                             'city_name' => $request->location['city'],
@@ -167,21 +109,19 @@ class EventController extends ApiController
 //                        }
 //                    }
                 }
-                $createdEvent = Event::with([
-                    'artistes',
-                    'categories',
+                $createdMovie = Movie::with([
+                    'genres',
                     'images',
                     'location',
                     'location.country',
                     'location.state',
                     'status',
-                    'tags',
                     'tickets',
                     'tickets.setting'
-                ])->findOrFail($event->id);
-                return $this->showOne($createdEvent);
+                ])->findOrFail($movie->id);
+                return $this->showOne($createdMovie);
             } catch (\Exception $e) {
-                return $this->errorResponse($e->getMessage());
+//                return $this->errorResponse($e->getMessage());
             }
         }
     }

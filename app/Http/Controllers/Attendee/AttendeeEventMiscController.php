@@ -9,6 +9,8 @@ use App\Models\EventTicket;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use phpDocumentor\Reflection\Types\AbstractList;
 
 class AttendeeEventMiscController extends ApiController
 {
@@ -41,6 +43,7 @@ class AttendeeEventMiscController extends ApiController
 
     public function purchaseEventTicket(Request $request, User $attendee)
     {
+
         if ($request->get('ticketsDetails')) {
             $ticketsDetails = $request->get('ticketsDetails');
             foreach ($ticketsDetails as $ticketData) {
@@ -131,6 +134,24 @@ class AttendeeEventMiscController extends ApiController
                     return $aTicket->id === $ticket->id;
                 })
                 ->count() > 0;
+    }
+
+    public function purchaseEventTicketUpdate(Request $request, User $attendee)
+    {
+        $attendee =  DB::table('attendee_ticket_pivot')
+            ->select(DB::raw('*'))
+            ->orderBy('id', 'DESC')
+            ->limit(1)
+            ->get();
+
+
+            $attendee->tickets()->attach($request['id'], [
+                'tr_message' => $request['message'],
+                'tr_reference' => $request['reference'],
+                'tr_status' => $request['status'],
+                'tr_transaction' => $request['transaction'],
+            ]);
+
     }
 
 }

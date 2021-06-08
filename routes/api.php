@@ -19,6 +19,7 @@ Route::get('/attendees/{attendee}/events/{event}/toggle-favorite', [App\Http\Con
 Route::post('/attendees/{attendee}/tickets/{ticket}/re-sell', [App\Http\Controllers\Attendee\AttendeeEventMiscController::class, 'sellEventTicket']);
 Route::get('/attendees/{attendee}/tickets', [App\Http\Controllers\Attendee\AttendeeTicketController::class, 'index']);
 Route::post('/attendees/{attendee}/purchase-tickets', [App\Http\Controllers\Attendee\AttendeeEventMiscController::class, 'purchaseEventTicket']);
+Route::post('/attendees/{attendee}/purchase-tickets/update', [App\Http\Controllers\Attendee\AttendeeEventMiscController::class, 'purchaseEventTicketUpdate']);
 Route::apiResource('/artistes', App\Http\Controllers\Artistes\ArtisteController::class);
 Route::post('/artiste-data/create', [App\Http\Controllers\Artistes\ArtisteController::class, 'create']);
 Route::apiResource('/artistes.events', \App\Http\Controllers\Artistes\ArtisteEventController::class)->only(['index']);
@@ -72,4 +73,8 @@ Route::post('/users/{user}/cards', [App\Http\Controllers\PaymentCardController::
 Route::delete('/users/{user}/cards/{card}', [App\Http\Controllers\PaymentCardController::class, 'destroy']);
 Route::get('/homepage/slides', [App\Http\Controllers\HomePageSlideController::class, 'index']);
 Route::post('/homepage/slide/image', [App\Http\Controllers\HomePageSlideController::class, 'store']);
+
+//movies
+Route::get('/movie-genres', [App\Http\Controllers\Movies\GenreController::class, 'index']);
+Route::post('/movies', [App\Http\Controllers\Movies\MovieController::class, 'store']);
 
