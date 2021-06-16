@@ -26,7 +26,7 @@ class EventController extends ApiController
     {
         $data = Event::with(['images'])
             ->where('is_published', 1)
-            ->orderBy('id', 'DESC')->limit(15)->paginate();
+            ->orderBy('id', 'DESC')->limit(9)->paginate();
         $events = $data->map(function ($dat) {
             $temp = [];
             $temp['id'] = $dat->id;
@@ -326,7 +326,7 @@ class EventController extends ApiController
     {
         $events = Event::with(['images'])
             ->where('is_published', 1)
-            ->orderBy('id', 'DESC')->offset(15)->limit(333)->paginate();
+            ->orderBy('id', 'DESC')->offset(9)->limit(333)->paginate();
         return ($events);
 //        return $this->showAll($events, 200);
     }

@@ -18,6 +18,8 @@ Route::apiResource('/attendees.events', App\Http\Controllers\Attendee\AttendeeEv
 Route::get('/attendees/{attendee}/events/{event}/toggle-favorite', [App\Http\Controllers\Attendee\AttendeeEventMiscController::class, 'toggleEventFavorite']);
 Route::post('/attendees/{attendee}/tickets/{ticket}/re-sell', [App\Http\Controllers\Attendee\AttendeeEventMiscController::class, 'sellEventTicket']);
 Route::get('/attendees/{attendee}/tickets', [App\Http\Controllers\Attendee\AttendeeTicketController::class, 'index']);
+Route::get('/attendees/{attendee}/tickets/overview', [App\Http\Controllers\Attendee\AttendeeTicketController::class, 'overviewEvent']);
+Route::get('/attendees/{attendee}/tickets/overview-movie', [App\Http\Controllers\Attendee\AttendeeTicketController::class, 'overviewMovie']);
 Route::post('/attendees/{attendee}/purchase-tickets', [App\Http\Controllers\Attendee\AttendeeEventMiscController::class, 'purchaseEventTicket']);
 Route::post('/attendees/{attendee}/purchase-tickets/update', [App\Http\Controllers\Attendee\AttendeeEventMiscController::class, 'purchaseEventTicketUpdate']);
 Route::apiResource('/artistes', App\Http\Controllers\Artistes\ArtisteController::class);
@@ -77,4 +79,20 @@ Route::post('/homepage/slide/image', [App\Http\Controllers\HomePageSlideControll
 //movies
 Route::get('/movie-genres', [App\Http\Controllers\Movies\GenreController::class, 'index']);
 Route::post('/movies', [App\Http\Controllers\Movies\MovieController::class, 'store']);
+Route::apiResource('/movies', \App\Http\Controllers\Movies\MovieController::class);
+Route::get('/movies/{movie}/images', [App\Http\Controllers\Movies\MovieController::class, 'getMovieImage']);
+Route::post('/movies/{movie}/images', [\App\Http\Controllers\Movies\MovieController::class, 'saveMovieImage']);
+Route::post('/movie/{movie}/delete', [\App\Http\Controllers\Movies\MovieController::class, 'destroy']);
+
+
+Route::post('/movies/{movie}/onlinePlatform', [App\Http\Controllers\Movies\MovieExtraActionController::class, 'storeOnlinePlatform']);
+Route::post('/movies/{movie}/onlinePlatformExtra', [App\Http\Controllers\Movies\MovieExtraActionController::class, 'storeOnlinePlatformExtra']);
+Route::post('/movies/{movie}/publish', [App\Http\Controllers\Movies\MovieExtraActionController::class, 'publishMovie']);
+Route::get('/movies/{movie}/unpublish', [App\Http\Controllers\Movies\MovieExtraActionController::class, 'unPublishMovie']);
+Route::apiResource('/movies.tickets', App\Http\Controllers\Movies\MovieTicketController::class);
+
+Route::get('/organizers/{movie}/movies', [App\Http\Controllers\Organizer\OrganizerEventController::class, 'movies']);
+Route::post('/movies/status/{movie}/approve', [App\Http\Controllers\Movies\MovieController::class, 'approve']);
+
+
 

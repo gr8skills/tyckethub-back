@@ -26,10 +26,8 @@ class Movie extends Model
 
     protected $guarded = ['id'];
     protected $appends = [
-        'banner',
+//        'banner',
         'thumb',
-        'mobile_image',
-        'status'
     ];
 
 //    public $transformer = EventTransformer::class;
@@ -84,34 +82,39 @@ class Movie extends Model
 
     public function location()
     {
-        return $this->hasOne(EventLocation::class, 'event_id');
+        return $this->hasOne(MovieLocation::class, 'movie_id');
     }
 
     public function status()
     {
-        return $this->belongsTo(EventStatus::class, 'event_status_id');
+        return $this->belongsTo(MovieStatus::class, 'movie_status_id');
     }
 
 
     public function attendees()
     {
-        return $this->belongsToMany(Attendee::class, 'attendee_event_pivot', 'event_id', 'user_id')
+        return $this->belongsToMany(Attendee::class, 'attendee_movie_pivot', 'movie_id', 'user_id')
             ->withPivot(['is_favorite', 'is_purchased']);
     }
 
 
     public function tags()
     {
-        return $this->belongsToMany(EventTag::class, 'event_tag_pivot', 'event_id', 'event_tag_id');
+        return $this->belongsToMany(MovieTag::class, 'movie_tag_pivot', 'movie_id', 'movie_tag_id');
     }
 
     public function tickets()
     {
-        return $this->hasMany(EventTicket::class, 'event_id');
+        return $this->hasMany(MovieTicket::class, 'movie_id');
     }
 
     public static function generateUID()
     {
         return uniqid(random_int(1, 10), true);
+    }
+
+    public function organizer()
+    {
+        return $this->belongsTo(Organizer::class, 'user_id');
     }
 }

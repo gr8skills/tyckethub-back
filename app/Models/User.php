@@ -94,4 +94,25 @@ class User extends Authenticatable
     {
         return $this->hasMany(Event::class, 'user_id');
     }
+
+    public function paidTickets()
+    {
+        return $this->belongsToMany(EventTicket::class, 'attendee_ticket_pivot',  'event_ticket_id')
+            ->withPivot(['quantity', 'price']);
+    }
+
+
+    public function favoriteEventsScope()
+    {
+        return $this->events()->filter(function ($event) {
+            return $event->pivot->is_favorite === Event::IS_FAVORITE_TRUE;
+        });
+    }
+
+    public function paidEventsScope()
+    {
+        return $this->events()->filter(function ($event) {
+            return $event->is_purchased === Event::IS_PURCHASED_TRUE;
+        });
+    }
 }

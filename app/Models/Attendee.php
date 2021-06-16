@@ -30,6 +30,12 @@ class Attendee extends User
             ->withPivot(['quantity', 'price']);
     }
 
+    public function movies()
+    {
+        return $this->belongsToMany(Movie::class, 'attendee_ticket_pivot', 'user_id', 'event_id')
+            ->withPivot(['is_favorite', 'is_purchased']);
+    }
+
     public function paidTickets()
     {
         return $this->belongsToMany(EventTicket::class, 'attendee_ticket_pivot',  'event_ticket_id')

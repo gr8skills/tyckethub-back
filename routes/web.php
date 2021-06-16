@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\MailGunController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -21,3 +22,9 @@ Route::get('/users/admins', function () {
     return \App\Models\Admin::all();
 //    return response()->json(['data' => $admins], 200);
 });
+
+Route::get('test', function (){
+    return view('mails.mailEvent');
+});
+
+Route::get('/send-mail-using-mailgun', [MailGunController::class, 'index'])->name('send.mail.using.mailgun.index');

@@ -34,7 +34,7 @@ class MovieTicket extends Model
 
     public function attendees()
     {
-        return $this->belongsToMany(Attendee::class, 'attendee_ticket_pivot', 'event_ticket_id', 'user_id');
+        return $this->belongsToMany(Attendee::class, 'attendee_ticket_pivot', 'movie_ticket_id', 'user_id');
     }
 
     public function allAttendees()

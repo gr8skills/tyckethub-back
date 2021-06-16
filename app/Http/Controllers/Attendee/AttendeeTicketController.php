@@ -13,4 +13,22 @@ class AttendeeTicketController extends ApiController
         $tickets = $attendee->tickets()->with(['event'])->get();
         return $this->showAll($tickets);
     }
+
+    public function overviewEvent(Attendee $attendee)
+    {
+        $tickets = $attendee->tickets()->with(['event'])
+            ->orderBy('id', 'DESC')
+            ->limit(5)
+            ->get();
+        return $this->showAll($tickets);
+    }
+
+    public function overviewMovie(Attendee $attendee)
+    {
+        $tickets = $attendee->tickets()->with(['movie'])
+            ->orderBy('id', 'DESC')
+            ->limit(5)
+            ->get();
+        return $this->showAll($tickets);
+    }
 }

@@ -7,10 +7,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreMovieRequest;
 use App\Models\EventLocation;
 use App\Models\EventTag;
+use App\Models\Image;
 use App\Models\Movie;
+use App\Models\MovieLocation;
+use App\Models\MovieTag;
 use App\Traits\ImageHelper;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MovieController extends ApiController
 {
@@ -48,6 +52,7 @@ class MovieController extends ApiController
             $validated_data['start_time'] = substr($validated_data['start_time'], 0, 8);
             $validated_data['end_time'] = substr($validated_data['end_time'], 0, 8);
             $validated_data['movie_status_id'] = 1;
+            $validated_data['is_published'] = 1;
             $validated_data['uid'] = Movie::generateUID();
             try {
                 $movie = Movie::create($validated_data);
@@ -121,110 +126,109 @@ class MovieController extends ApiController
                 ])->findOrFail($movie->id);
                 return $this->showOne($createdMovie);
             } catch (\Exception $e) {
-//                return $this->errorResponse($e->getMessage());
+                return $this->errorResponse($e->getMessage());
             }
         }
     }
 
-    public function show($event)
+    public function show($movie)
     {
-        $event = Event::with([
-            'artistes',
-            'categories',
+        $movie = Movie::with([
+            'genres',
             'images',
             'location',
             'location.country',
             'location.state',
             'location.onlinePlatforms',
             'status',
-            'tags',
             'tickets',
             'tickets.setting'
-        ])->findOrFail($event);
-        return $this->showOne($event);
+        ])->findOrFail($movie);
+        return $this->showOne($movie);
     }
 
-    public function update(Request $request, Event $event)
+    public function update(Request $request, Movie $movie)
     {
         $error = true;
         $data = $request->all();
 
-        $event->fill($data);
-        if ($event->isDirty()) {
-            DB::transaction(function () use (&$event, &$data, &$error) {
-                $event->save();
-                $this->saveEventData($event, $data, 'update');
+        $movie->fill($data);
+        if ($movie->isDirty()) {
+            DB::transaction(function () use (&$movie, &$data, &$error) {
+                $movie->save();
+                $this->saveMovieData($movie, $data, 'update');
                 $error = false;
                 return $error;
             });
 
             if (!$error) {
-                return $this->showOne($event);
+                return $this->showOne($movie);
             }
             return $this->errorResponse('Update failed. Please try again later');
         }
-        return $this->errorResponse('No change was made to the event details');
+        return $this->errorResponse('No change was made to the movie details');
     }
 
-    public function destroy(Event $event)
+    public function destroy(Movie $movie)
     {
         try {
-            $event->delete();
+            $movie->delete();
+            $movie->location()->delete();
 
-            return $this->showOne($event);
+            return $this->showOne($movie);
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage(), 500);
         }
     }
 
-    private function saveEventData($event, $payload, $action = 'store')
+    private function saveMovieData($movie, $payload, $action = 'store')
     {
-        DB::transaction(function () use (&$event, &$payload, &$action) {
-            if (!is_null($payload['category_ids']) && isset($payload['category_ids']) > 0) {
-                foreach ($payload['category_ids'] as $category_id) {
+        DB::transaction(function () use (&$movie, &$payload, &$action) {
+            if (!is_null($payload['genre_ids']) && isset($payload['genre_ids']) > 0) {
+                foreach ($payload['genre_ids'] as $genre_id) {
                     if ($action === 'update') {
-                        $event->categories->each(function ($cat) use (&$event) {
-                            $event->categories()->detach($cat->id);
+                        $movie->genres->each(function ($gen) use (&$movie) {
+                            $movie->genres()->detach($gen->id);
                         });
                     }
-                    $event->categories()->attach($category_id);
+                    $movie->genres()->attach($genre_id);
                 }
             }
 
 //            dump('Artistes id payload ', $payload['artiste_ids']);
-            if (!is_null($payload['artiste_ids']) && isset($payload['artiste_ids']) > 0) {
-                foreach ($payload['artiste_ids'] as $artiste_id) {
-                    if ($action === 'update') {
-                        $event->artistes->each(function ($art) use (&$event) {
-                            $event->artistes()->detach($art->id);
-                        });
-                    }
-                    $event->artistes()->attach($artiste_id);
-                }
-            }
-
-            if (!is_null($payload['tags']) && count($payload['tags']) > 0) {
-                $available_tag_names = EventTag::all(['id', 'name'])->pluck('name', 'id')->toArray();
-
-                foreach ($payload['tags'] as $tag) {
-                    $tag = strtolower($tag);
-
-                    if (in_array($tag, $available_tag_names)) {
-                        $tag_id = array_search($tag, $available_tag_names);
-
-                        if ($action === 'update') {
-                            $event->tags()->detach($tag_id);
-                        }
-
-                        $event->tags()->attach($tag_id);
-                    } else {
-                        $tag_new = EventTag::create([
-                            'name' => $tag,
-                        ]);
-                        $event->tags()->attach($tag_new->id);
-                    }
-                }
-            }
+//            if (!is_null($payload['artiste_ids']) && isset($payload['artiste_ids']) > 0) {
+//                foreach ($payload['artiste_ids'] as $artiste_id) {
+//                    if ($action === 'update') {
+//                        $movie->artistes->each(function ($art) use (&$movie) {
+//                            $movie->artistes()->detach($art->id);
+//                        });
+//                    }
+//                    $movie->artistes()->attach($artiste_id);
+//                }
+//            }
+//
+//            if (!is_null($payload['tags']) && count($payload['tags']) > 0) {
+//                $available_tag_names = MovieTag::all(['id', 'name'])->pluck('name', 'id')->toArray();
+//
+//                foreach ($payload['tags'] as $tag) {
+//                    $tag = strtolower($tag);
+//
+//                    if (in_array($tag, $available_tag_names)) {
+//                        $tag_id = array_search($tag, $available_tag_names);
+//
+//                        if ($action === 'update') {
+//                            $movie->tags()->detach($tag_id);
+//                        }
+//
+//                        $movie->tags()->attach($tag_id);
+//                    } else {
+//                        $tag_new = MovieTag::create([
+//                            'name' => $tag,
+//                        ]);
+//                        $movie->tags()->attach($tag_new->id);
+//                    }
+//                }
+//            }
 
 //            if (!is_null($payload['images']) && count($payload['images']) > 0) {
 //                $uploaded_images = $payload['images'];
@@ -236,7 +240,7 @@ class MovieController extends ApiController
 //                    }
 //
 //                    if ($image_path) {
-//                        $event->images()->create([
+//                        $movie->images()->create([
 //                            'image_url' => $image_path
 //                        ]);
 //                    }
@@ -251,45 +255,45 @@ class MovieController extends ApiController
         $platform = strtolower($platform);
         switch ($platform) {
             case 'online':
-                return EventLocation::PLATFORM_ONLINE;
+                return MovieLocation::PLATFORM_ONLINE;
                 break;
             case 'tobeAnnounced':
-                return EventLocation::PLATFORM_TO_BE_ANNOUNCED;
+                return MovieLocation::PLATFORM_TO_BE_ANNOUNCED;
                 break;
             default:
-                return EventLocation::PLATFORM_LIVE;
+                return MovieLocation::PLATFORM_LIVE;
                 break;
         }
     }
 
-    public function getMoreEvents()
+    public function getMoreMovies()
     {
-        $events = Event::with(['images'])
+        $movies = Movie::with(['images'])
             ->where('is_published', 1)
             ->orderBy('id', 'DESC')->offset(15)->limit(333)->paginate();
-        return ($events);
-//        return $this->showAll($events, 200);
+        return ($movies);
+//        return $this->showAll($movies, 200);
     }
 
-    public function getSimilarEvents($event)
+    public function getSimilarMovies($movie)
     {
-        $event = Event::with(['artistes'=>function($ev){$ev->select('id','name');}])->where('id', $event)
+        $movie = Movie::with(['artistes'=>function($ev){$ev->select('id','name');}])->where('id', $movie)
 //            ->select(['id','status','age_restriction'])
             ->first();
         $data = [];
         $i = -1;
-        $data['id'] = $event->id;
-        $data['status'] = $event->event_status_id;
-        $data['name'] = $event->name;
-        $data['description'] = $event->description;
-        $data['age_restriction'] = $event->age_restriction;
-        foreach ($event->artistes as $artiste){
+        $data['id'] = $movie->id;
+        $data['status'] = $movie->movie_status_id;
+        $data['name'] = $movie->name;
+        $data['description'] = $movie->description;
+        $data['age_restriction'] = $movie->age_restriction;
+        foreach ($movie->artistes as $artiste){
             $i++;
             $data['artiste'][$i] = [
                 'id' => $artiste->id,
                 'name' => $artiste->name];
         }
-        $similar = Event::with(['images'])
+        $similar = Movie::with(['images'])
             ->where(function ($sim) use ($data) {
                 $sim->where('id','!=', $data['id']);
                 $sim->orWhere('age_restriction', $data['age_restriction']);
@@ -302,7 +306,72 @@ class MovieController extends ApiController
             ->limit(5)
             ->get();
         return ($similar);
+    }
 
+    public function getMovieImage(Movie $movie)
+    {
+        $images = $movie->images;
+        return $this->showAll($images);
+    }
+
+    public function saveMovieImage(Request $request, Movie $movie)
+    {
+
+        if ($movie) {
+            $data = $request->all();
+            if (is_null($data) || count($data) === 0) {
+                return $this->errorResponse('Cannot submit empty form. Please try again');
+            }
+
+            if ($request->has('banner')) {
+                $image_url = $this->storeImage($request->file('banner'), Image::IMAGE_TYPES[0]);
+                if (!$image_url) {
+                    return $this->errorResponse('Image upload failed.');
+                }
+                $movie->images()->create([
+                    'image_url' => $image_url,
+                    'tag' => 'banner'
+                ]);
+                return $this->showMessage('Image uploaded successfully.');
+            }
+            if ($request->has('thumb')) {
+                $image_url = $this->storeImage($request->file('thumb'), Image::IMAGE_TYPES[1]);
+                if (!$image_url) {
+                    return $this->errorResponse('Image upload failed.');
+                }
+                $movie->images()->create([
+                    'image_url' => $image_url,
+                    'tag' => 'thumb'
+                ]);
+                return $this->showMessage('Image uploaded successfully.');
+            }
+            if ($request->has('mobile')) {
+                $image_url = $this->storeImage($request->file('mobile'), Image::IMAGE_TYPES[2]);
+                if (!$image_url) {
+                    return $this->errorResponse('Image upload failed.');
+                }
+                $movie->images()->create([
+                    'image_url' => $image_url,
+                    'tag' => 'mobile'
+                ]);
+                return $this->showMessage('Image uploaded successfully.');
+            }
+        }
+    }
+
+    public function approve($id)
+    {
+        $id = (int)$id;
+        $movie = Movie::where('id', $id)->first();
+        try {
+            if ($movie['is_published'] === 0)
+                $movie['is_published'] = 1;
+            else
+                $movie['is_published'] = 0;
+            $movie->save();
+        }catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 500);
+        }
 
     }
 }

@@ -43,6 +43,8 @@ return [
             'password' => env('MAIL_PASSWORD'),
             'timeout' => null,
             'auth_mode' => null,
+            'domain' => env('MAILGUN_DOMAIN'),
+            'secret' => env('MAILGUN_SECRET'),
         ],
 
         'ses' => [
@@ -50,7 +52,9 @@ return [
         ],
 
         'mailgun' => [
-            'transport' => 'mailgun',
+            'transport'=>'mailgun',
+            'domain' => env('MAILGUN_DOMAIN'),
+            'secret' => env('MAILGUN_PRIVATE'),
         ],
 
         'postmark' => [
@@ -84,9 +88,11 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'address' => env('MAILGUN_FORCE_FROM_ADDRESS', 'admin@example.com'),
+        'name' => env('MAILGUN_FROM_NAME', 'TycketHub'),
     ],
+
+    'reply_to' => ['address' => env('MAILGUN_REPLY_TO', 'support@example.com'), 'name' => env('MAILGUN_FROM_NAME', 'App Name')],
 
     /*
     |--------------------------------------------------------------------------

@@ -26,6 +26,10 @@ class EventTicket extends Model
     {
         return $this->belongsTo(Event::class, 'event_id');
     }
+    public function movie()
+    {
+        return $this->belongsTo(Movie::class, 'movie_id');
+    }
 
     public function setting()
     {
